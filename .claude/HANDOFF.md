@@ -1,25 +1,28 @@
-# yc-young-adults — Codex Handoff (v0.4.0)
+# yc-young-adults — Codex Handoff (v0.5.0)
 
 ## 현재 상태
-- 최신 커밋(push 예정): "PERMISSION_DENIED 수정 — 설문 전용 Firebase 프로젝트로 분리"
-- 이전 커밋: `7ad5e0f` "2026 청년부 여름수련회 계획안 PDF 추가"
+- 최신 커밋(push 예정): "Firebase를 통합 프로젝트 yc-young-adults로 일원화"
+- 이전 커밋: `b17d3a1` "PERMISSION_DENIED 수정: 설문을 전용 Firebase 프로젝트(yc-homecoming-2026)로 분리"
 - 브랜치: `main`
 - GitHub 저장소: https://github.com/max2guy/yc-young-adults (Public)
 - GitHub Pages 배포됨: https://max2guy.github.io/yc-young-adults/
 
 ## 방금 수정한 내용
 - **버그**: 설문 제출 시 `PERMISSION_DENIED: Permission denied` 오류로 응답이 저장되지 않음
-- **원인**: 기존에 임시로 재사용하던 `ycprayer-7eac2` 프로젝트의 Realtime Database 규칙(`~/Projects/ycpraying/database.rules.json`)에 `homecoming2026` 경로 규칙이 없어 기본 거부됨. `curl`로 인증 없이 REST 호출해도 동일하게 거부되는 것으로 재현 확인.
-- **해결**: `ycprayer-7eac2` 규칙을 건드리는 대신, 이미 존재하던 전용 Firebase 프로젝트 **`yc-homecoming-2026`**(웹앱은 등록돼 있었으나 DB 인스턴스는 없었음)에 Realtime Database 인스턴스(`yc-homecoming-2026-default-rtdb`, 리전 `us-central1`)를 새로 생성하고, `homecoming2026/responses` 경로에 `.read`/`.write: true` 규칙만 배포. `2026-homecoming-survey.html`의 `firebaseConfig`를 이 새 프로젝트 값으로 교체함 (129~137번째 줄).
-- REST로 write/read/delete 왕복 테스트 완료, 다른 경로(`somethingElse`)는 기본 거부되는 것도 확인함 → 규칙이 필요한 범위에만 정확히 열려 있음.
-- 이제 `ycprayer-7eac2`는 더 이상 이 설문과 무관 (기존 ycpraying 앱 전용으로 완전히 분리됨).
+- **1차 조치(같은 세션 내 곧바로 대체됨)**: 임시로 전용 프로젝트 `yc-homecoming-2026`을 새로 만들어 연결했었음
+- **최종 조치**: 사용자가 "GitHub 저장소 이름(yc-young-adults)과 통일되게 Firebase 프로젝트도 하나로 합치자"고 요청 → **`yc-homecoming-2026`은 삭제하지 않고 미사용 상태로 남겨두고**, 대신 새 프로젝트 **`yc-young-adults`**를 만들어 이것을 청년부 자료실의 통합 Firebase 백엔드로 확정함
+  - Realtime Database 인스턴스: `yc-young-adults-default-rtdb` (리전 `us-central1`)
+  - 규칙: `homecoming2026/responses` 경로에만 `.read`/`.write: true` (다른 경로는 기본 거부)
+  - `2026-homecoming-survey.html`의 `firebaseConfig`를 이 프로젝트 값으로 교체함 (129~136번째 줄)
+- REST로 write/read/delete 왕복 테스트 완료.
+- **주의**: `ycprayer-7eac2`(ycpraying 앱 전용)와 `yc-homecoming-2026`(현재 미사용, 삭제 안 함)은 이 설문과 더 이상 무관함. 혼동 주의.
 
 ## 프로젝트 개요
 - 순수 정적 HTML/CSS/JS (빌드 과정 없음, 프레임워크 없음)
-- Firebase: Realtime Database만 사용, **전용 프로젝트 `yc-homecoming-2026`** (더 이상 `ycprayer-7eac2`와 공유하지 않음)
-  - Console: https://console.firebase.google.com/project/yc-homecoming-2026/overview
-  - 로컬 firebase 설정 디렉터리 없음 — 규칙 재배포가 필요하면 임시 디렉터리에서 `firebase init database --project yc-homecoming-2026` 후 `database.rules.json` 작성 → `firebase deploy --only database --project yc-homecoming-2026`
-- 데이터 경로: `homecoming2026/responses` (변경 없음)
+- Firebase: Realtime Database만 사용, **통합 전용 프로젝트 `yc-young-adults`** — 앞으로 청년부 자료실에 새 설문/자료가 추가되면 이 프로젝트 하나에 경로만 늘려서(`Q` 배열처럼) 쓰면 됨
+  - Console: https://console.firebase.google.com/project/yc-young-adults/overview
+  - 로컬 firebase 설정 디렉터리 없음 — 규칙 재배포가 필요하면 임시 디렉터리에서 `firebase init database --project yc-young-adults` 후 `database.rules.json` 작성 → `firebase deploy --only database --project yc-young-adults`
+- 데이터 경로: `homecoming2026/responses` (변경 없음). 새 설문을 추가할 땐 규칙에 새 경로를 추가하고 배포하면 됨.
 - 인증 없음, 관리자 페이지는 PIN 하드코딩(`ADMIN_PIN = "6291"`) 방식 — 보안 수준 낮음, 민감 데이터 저장 금지
 - 배포: `gh repo create` + `git push` 로 생성, GitHub Pages는 `gh api repos/.../pages` REST 호출로 활성화함 (수동 웹 설정 아님)
 
