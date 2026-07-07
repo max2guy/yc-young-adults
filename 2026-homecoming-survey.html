@@ -300,11 +300,13 @@ function checkPin(){
   if(val === ADMIN_PIN){ loadAdminData(); }
   else { alert("PIN이 올바르지 않습니다."); }
 }
+let currentRows = [];
 function loadAdminData(){
-  document.getElementById("app").innerHTML = `<div class="admin-header"><h2>홈커밍데이 설문 결과</h2><button class="refresh" onclick="loadAdminData()">새로고침</button></div><div class="wrap" id="statsWrap">불러오는 중...</div>`;
+  document.getElementById("app").innerHTML = `<div class="admin-header"><h2>홈커밍데이 설문 결과</h2><div style="display:flex;gap:8px;"><button class="refresh" onclick="exportReportText()">결과 내보내기</button><button class="refresh" onclick="loadAdminData()">새로고침</button></div></div><div class="wrap" id="statsWrap">불러오는 중...</div>`;
   db.ref(DB_PATH).once("value").then(snap=>{
     const data = snap.val() || {};
     const rows = Object.values(data);
+    currentRows = rows;
     renderStats(rows);
   });
 }
@@ -357,6 +359,74 @@ function renderStats(rows){
   }
 
   document.getElementById("statsWrap").innerHTML = html;
+}
+
+/* ===================== 결과지 작성용 내보내기 ===================== */
+function buildReportText(rows){
+  const total = rows.length;
+  const lines = [];
+  lines.push("2026 연천장로교회 청년부 홈커밍데이 설문 결과");
+  lines.push("총 응답 수: " + total + "명");
+  lines.push("");
+
+  Q.forEach(q=>{
+    if(q.type === "text") return;
+    lines.push(`[${q.sec}] ${q.text}`);
+    const counts = {};
+    q.opts.forEach(o=>counts[o]=0);
+    rows.forEach(r=>{
+      const a = r.answers && r.answers[q.id];
+      if(!a) return;
+      if(Array.isArray(a)) a.forEach(v=>{ if(counts[v]!==undefined) counts[v]++; });
+      else if(counts[a]!==undefined) counts[a]++;
+    });
+    Object.keys(counts).forEach(k=>{
+      const pct = total ? Math.round(counts[k]/total*100) : 0;
+      lines.push(`- ${k}: ${counts[k]}명 (${pct}%)`);
+    });
+    lines.push("");
+  });
+
+  Q.filter(q=>q.type==="text").forEach(q=>{
+    const replies = rows.map(r=> r.answers && r.answers[q.id]).filter(Boolean);
+    lines.push(`[${q.sec}] ${q.text} (${replies.length}건)`);
+    replies.forEach(t=>lines.push("- " + t));
+    lines.push("");
+  });
+
+  const etcTexts = [];
+  rows.forEach(r=>{
+    if(r.etcAnswers) Object.values(r.etcAnswers).forEach(v=>{ if(v) etcTexts.push(v); });
+  });
+  if(etcTexts.length){
+    lines.push("[기타 응답 모음]");
+    etcTexts.forEach(t=>lines.push("- " + t));
+  }
+
+  return lines.join("\n");
+}
+
+function exportReportText(){
+  const text = buildReportText(currentRows);
+  const done = ()=> alert("결과 요약이 클립보드에 복사되었습니다.\nClaude 대화창에 붙여넣고 '체육대회 결과지처럼 작성해줘'라고 요청하세요.");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try{ document.execCommand("copy"); done(); }
+  catch(e){ prompt("아래 텍스트를 직접 복사해주세요:", text); }
+  document.body.removeChild(ta);
 }
 
 /* ===================== 진입점 ===================== */
