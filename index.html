@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>청년부 자료실 | 연천장로교회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF7EE;
+    --ink:#2E332C;
+    --sage:#4A6155;
+    --sage-dark:#39493F;
+    --blossom:#D98A8A;
+    --gold:#C9A227;
+    --line:#E4DCC9;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;touch-action:manipulation;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif;
+    line-height:1.6;
+    padding-bottom:60px;
+    min-height:100vh;
+  }
+  .hero{
+    background:linear-gradient(160deg,var(--sage) 0%,var(--sage-dark) 100%);
+    color:#fff;
+    padding:52px 24px 60px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-1px;
+    height:36px;
+    background:var(--cream);
+    border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  }
+  .hero .eyebrow{
+    font-size:13px; letter-spacing:.14em; opacity:.85; font-weight:500;
+    text-transform:uppercase;
+  }
+  .hero h1{
+    font-family:'Noto Serif KR',serif;
+    font-size:27px; font-weight:700; margin:12px 0 6px;
+  }
+  .hero p{
+    font-size:14px; opacity:.9; max-width:340px; margin:0 auto;
+  }
+  .wrap{max-width:560px; margin:0 auto; padding:0 20px;}
+  .section-label{
+    font-family:'Noto Serif KR',serif;
+    font-size:15px; font-weight:700; color:var(--sage-dark);
+    margin:32px 0 4px; padding-left:14px; border-left:3px solid var(--gold);
+  }
+  .card-link{
+    display:block;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px;
+    margin-top:12px;
+    text-decoration:none;
+    color:inherit;
+    transition:.15s;
+  }
+  .card-link:active{ transform:scale(.98); }
+  .card-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .card-title{ font-size:15.5px; font-weight:700; color:var(--sage-dark); }
+  .card-date{ font-size:12px; color:var(--gold); font-weight:600; white-space:nowrap; }
+  .card-desc{ font-size:13.5px; color:#5a5a52; margin-top:6px; }
+  .card-tag{
+    display:inline-block; font-size:11px; font-weight:700; color:var(--sage);
+    background:#F1F5F1; border-radius:6px; padding:2px 8px; margin-top:8px;
+  }
+  .empty-note{
+    text-align:center; font-size:13px; color:#9a9484;
+    padding:24px 0;
+  }
+  .footer-note{text-align:center; font-size:12px; color:#9a9484; margin-top:40px;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="eyebrow">연천장로교회 청년부</div>
+    <h1>청년부 자료실</h1>
+    <p>설문조사 · 계획서 · 회의자료 모음</p>
+  </div>
+
+  <div class="wrap" id="resourceWrap"></div>
+  <div class="footer-note">연천장로교회 청년부 🌿</div>
+
+<script>
+/* ===================================================================
+   자료 목록 — 새 자료가 생기면 아래 배열에 한 줄만 추가하면 됩니다.
+   category 예시: "설문조사", "계획서", "회의자료", "안내"
+   =================================================================== */
+const RESOURCES = [
+  {
+    title: "2026 홈커밍데이 설문조사",
+    date: "2026.07",
+    category: "설문조사",
+    desc: "7월 5일 홈커밍데이(찬양·말씀·식사·친교)에 대한 참석자 의견을 모읍니다.",
+    href: "2026-homecoming-survey.html"
+  },
+  // 예시) 다음 자료가 생기면 아래처럼 추가:
+  // {
+  //   title: "2026 여름 수련회 계획서",
+  //   date: "2026.08",
+  //   category: "계획서",
+  //   desc: "8월 15~18일 파주 수련회 일정 및 예산 안내",
+  //   href: "2026-summer-retreat-plan.html"
+  // },
+];
+
+function render(){
+  const wrap = document.getElementById("resourceWrap");
+  if(RESOURCES.length === 0){
+    wrap.innerHTML = `<div class="empty-note">아직 등록된 자료가 없습니다.</div>`;
+    return;
+  }
+  const byCat = {};
+  RESOURCES.forEach(r => { (byCat[r.category] = byCat[r.category] || []).push(r); });
+
+  let html = "";
+  Object.keys(byCat).forEach(cat=>{
+    html += `<div class="section-label">${cat}</div>`;
+    byCat[cat].forEach(r=>{
+      html += `
+        <a class="card-link" href="${r.href}">
+          <div class="card-top">
+            <span class="card-title">${r.title}</span>
+            <span class="card-date">${r.date}</span>
+          </div>
+          <div class="card-desc">${r.desc}</div>
+        </a>`;
+    });
+  });
+  wrap.innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>

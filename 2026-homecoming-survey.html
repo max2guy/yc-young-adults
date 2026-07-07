@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>홈커밍데이 설문조사 | 연천장로교회 청년부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --cream:#FBF7EE;
+    --ink:#2E332C;
+    --sage:#4A6155;
+    --sage-dark:#39493F;
+    --blossom:#D98A8A;
+    --gold:#C9A227;
+    --line:#E4DCC9;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;touch-action:manipulation;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif;
+    line-height:1.6;
+    padding-bottom:60px;
+  }
+  .hero{
+    background:linear-gradient(160deg,var(--sage) 0%,var(--sage-dark) 100%);
+    color:#fff;
+    padding:48px 24px 56px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-1px;
+    height:36px;
+    background:var(--cream);
+    border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  }
+  .hero .eyebrow{
+    font-size:13px; letter-spacing:.14em; opacity:.85; font-weight:500;
+    text-transform:uppercase;
+  }
+  .hero h1{
+    font-family:'Noto Serif KR',serif;
+    font-size:28px; font-weight:700; margin:12px 0 8px;
+  }
+  .hero p.verse{
+    font-family:'Noto Serif KR',serif;
+    font-size:14px; opacity:.9; max-width:340px; margin:0 auto; font-style:italic;
+  }
+  .wrap{max-width:520px; margin:0 auto; padding:0 20px;}
+  .section-label{
+    font-family:'Noto Serif KR',serif;
+    font-size:15px; font-weight:700; color:var(--sage-dark);
+    margin:36px 0 4px; padding-left:14px; border-left:3px solid var(--gold);
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 18px;
+    margin-top:12px;
+  }
+  .q-text{font-size:15px; font-weight:500; margin-bottom:14px;}
+  .q-num{color:var(--blossom); font-weight:700; margin-right:4px;}
+  .opts{display:flex; flex-direction:column; gap:8px;}
+  .opt{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 14px; border:1px solid var(--line); border-radius:10px;
+    cursor:pointer; font-size:14.5px; transition:.15s;
+    -webkit-appearance:none;
+  }
+  .opt:active{transform:scale(.98);}
+  .opt.selected{border-color:var(--sage); background:#F1F5F1; color:var(--sage-dark); font-weight:500;}
+  .opt input{display:none;}
+  .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line); flex-shrink:0;}
+  .opt.selected .dot{border-color:var(--sage); background:radial-gradient(var(--sage) 0 40%, transparent 44%);}
+  .chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--line); flex-shrink:0;}
+  .opt.selected .chk{border-color:var(--sage); background:var(--sage);}
+  textarea, .etc-input{
+    width:100%; border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; font-family:inherit; font-size:16px; color:var(--ink);
+    background:#FDFCF9; resize:vertical; margin-top:8px;
+  }
+  textarea{min-height:90px;}
+  .etc-input{margin-top:8px;}
+  .submit-bar{max-width:520px; margin:32px auto 0; padding:0 20px;}
+  button.submit{
+    width:100%; padding:16px; border:none; border-radius:12px;
+    background:var(--sage-dark); color:#fff; font-size:16px; font-weight:700;
+    font-family:'Noto Serif KR',serif; cursor:pointer; -webkit-appearance:none;
+  }
+  button.submit:active{opacity:.85;}
+  .done{
+    text-align:center; padding:80px 24px;
+  }
+  .done h2{font-family:'Noto Serif KR',serif; color:var(--sage-dark); font-size:22px;}
+  .footer-note{text-align:center; font-size:12px; color:#9a9484; margin-top:28px;}
+  .admin-lock{max-width:340px; margin:80px auto; text-align:center;}
+  .admin-lock input{
+    width:100%; text-align:center; font-size:22px; letter-spacing:.3em;
+    padding:14px; border:1px solid var(--line); border-radius:10px; margin:16px 0;
+  }
+  .stat-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px;}
+  .stat-title{font-weight:700; font-size:14px; color:var(--sage-dark); margin-bottom:10px;}
+  .bar-row{display:flex; align-items:center; gap:8px; font-size:13px; margin:6px 0;}
+  .bar-label{width:110px; flex-shrink:0; color:#555;}
+  .bar-track{flex:1; background:#EFEAE0; border-radius:6px; height:14px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--sage); border-radius:6px;}
+  .bar-count{width:34px; text-align:right; font-weight:600; color:var(--sage-dark);}
+  .text-reply{padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px; color:#444;}
+  .admin-header{display:flex; justify-content:space-between; align-items:center; margin:24px auto 8px; max-width:520px; padding:0 20px;}
+  .admin-header h2{font-family:'Noto Serif KR',serif; color:var(--sage-dark); font-size:19px; margin:0;}
+  .refresh{font-size:13px; color:var(--sage); background:none; border:1px solid var(--sage); border-radius:8px; padding:6px 12px; cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===================== 설정 ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAF-L1RGBMb_uZBR4a3Aj0OVFu_KjccWZQ",
+  authDomain: "ycprayer-7eac2.firebaseapp.com",
+  databaseURL: "https://ycprayer-7eac2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ycprayer-7eac2",
+  storageBucket: "ycprayer-7eac2.firebasestorage.app",
+  messagingSenderId: "308314713888",
+  appId: "1:308314713888:web:dc52dc7ba1ac7b76153145",
+  measurementId: "G-XGEMDBQG2J"
+};
+const ADMIN_PIN = "6291";
+const DB_PATH = "homecoming2026/responses";
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ===================== 문항 정의 ===================== */
+const Q = [
+  {id:"q1", type:"radio", sec:"찬양 – 헤세드 초청",
+   text:"헤세드 찬양팀의 찬양은 어떠셨나요?",
+   opts:["매우 좋았다","좋았다","보통이었다","아쉬웠다"]},
+  {id:"q2", type:"radio", sec:"찬양 – 헤세드 초청",
+   text:"찬양 시간의 길이는 어떠셨나요?",
+   opts:["조금 짧았다","적당했다","조금 길었다"]},
+  {id:"q3", type:"radio", sec:"찬양 – 헤세드 초청",
+   text:"다음에 이런 행사가 있을 때 찬양팀은 어떻게 하면 좋을까요?",
+   opts:["헤세드를 다시 초청하고 싶다","다른 찬양팀도 경험해보고 싶다","청년부 자체 찬양팀으로 하면 좋겠다","상관없다","기타"], etc:true},
+
+  {id:"q4", type:"radio", sec:"예배 순서",
+   text:"말씀(설교 「일어나 함께 가자」)은 어떠셨나요?",
+   opts:["매우 은혜로웠다","은혜로웠다","보통이었다","아쉬웠다"]},
+  {id:"q5", type:"radio", sec:"예배 순서",
+   text:"결단찬송 및 결단의 시간은 어떠셨나요?",
+   opts:["매우 은혜로웠다","은혜로웠다","보통이었다","아쉬웠다"]},
+
+  {id:"q6", type:"radio", sec:"프로그램 및 진행",
+   text:"전체 프로그램의 순서와 진행은 어떠셨나요?",
+   opts:["매우 좋았다","좋았다","보통이었다","아쉬웠다"]},
+  {id:"q7", type:"check", sec:"프로그램 및 진행",
+   text:"가장 좋았던 순서는 무엇인가요? (중복 선택 가능)",
+   opts:["찬양(헤세드)","말씀","결단찬송","친교","식사","기타"], etc:true},
+  {id:"q8", type:"radio", sec:"프로그램 및 진행",
+   text:"시간 배분(예배/친교/식사 등)은 적절했나요?",
+   opts:["예배 시간이 더 필요했다","친교 시간이 더 필요했다","전체적으로 적절했다","기타"], etc:true},
+
+  {id:"q9", type:"radio", sec:"식사 – 카리스",
+   text:"카리스에 요청한 식사는 어떠셨나요?",
+   opts:["매우 만족","만족","보통","아쉬웠다"]},
+  {id:"q10", type:"text", sec:"식사 – 카리스",
+   text:"식사에 대한 의견이나 다음에 개선했으면 하는 점이 있다면 적어주세요."},
+
+  {id:"q11", type:"radio", sec:"친교",
+   text:"친교의 시간은 충분했나요?",
+   opts:["충분했다","적당했다","부족했다"]},
+
+  {id:"q12", type:"text", sec:"준비 및 보완점",
+   text:"행사를 준비하고 진행하면서 아쉬웠던 점이나 보완이 필요한 부분이 있다면 자유롭게 적어주세요."},
+
+  {id:"q13", type:"text", sec:"자유 의견",
+   text:"홈커밍데이 전체에 대한 자유로운 의견을 남겨주세요."},
+];
+
+const answers = {};
+const etcAnswers = {};
+
+/* ===================== 렌더링 ===================== */
+function renderSurvey(){
+  let bySec = {};
+  Q.forEach(q=>{ (bySec[q.sec] = bySec[q.sec]||[]).push(q); });
+
+  let html = `
+  <div class="hero">
+    <div class="eyebrow">연천장로교회 청년부</div>
+    <h1>홈커밍데이 설문조사</h1>
+    <p class="verse">"일어나 함께 가자" — 아가 2:10-13</p>
+  </div>
+  <div class="wrap">`;
+
+  Object.keys(bySec).forEach(sec=>{
+    html += `<div class="section-label">${sec}</div>`;
+    bySec[sec].forEach((q,idx)=>{
+      const globalIdx = Q.indexOf(q)+1;
+      html += `<div class="card" data-qid="${q.id}">
+        <div class="q-text"><span class="q-num">Q${globalIdx}.</span>${q.text}</div>`;
+      if(q.type==="radio"){
+        html += `<div class="opts">` + q.opts.map(o=>`
+          <label class="opt" data-val="${o}">
+            <span class="dot"></span><span>${o}</span>
+          </label>`).join("") + `</div>`;
+        if(q.etc) html += `<input type="text" class="etc-input" placeholder="기타 의견을 입력해주세요" style="display:none" data-etcfor="${q.id}">`;
+      } else if(q.type==="check"){
+        html += `<div class="opts">` + q.opts.map(o=>`
+          <label class="opt" data-val="${o}">
+            <span class="chk"></span><span>${o}</span>
+          </label>`).join("") + `</div>`;
+        if(q.etc) html += `<input type="text" class="etc-input" placeholder="기타 의견을 입력해주세요" style="display:none" data-etcfor="${q.id}">`;
+      } else if(q.type==="text"){
+        html += `<textarea data-textfor="${q.id}" placeholder="자유롭게 적어주세요"></textarea>`;
+      }
+      html += `</div>`;
+    });
+  });
+
+  html += `</div>
+  <div class="submit-bar">
+    <button class="submit" onclick="submitSurvey()">설문 제출하기</button>
+  </div>
+  <div class="footer-note">응답해주셔서 감사합니다 🌿</div>`;
+
+  document.getElementById("app").innerHTML = html;
+  bindEvents();
+}
+
+function bindEvents(){
+  document.querySelectorAll('.card').forEach(card=>{
+    const qid = card.dataset.qid;
+    const q = Q.find(x=>x.id===qid);
+    card.querySelectorAll('.opt').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        const val = opt.dataset.val;
+        if(q.type==="radio"){
+          card.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+          opt.classList.add('selected');
+          answers[qid] = val;
+          const etcInput = card.querySelector(`[data-etcfor="${qid}"]`);
+          if(etcInput) etcInput.style.display = (val==="기타") ? "block" : "none";
+        } else if(q.type==="check"){
+          opt.classList.toggle('selected');
+          const selected = Array.from(card.querySelectorAll('.opt.selected')).map(o=>o.dataset.val);
+          answers[qid] = selected;
+          const etcInput = card.querySelector(`[data-etcfor="${qid}"]`);
+          if(etcInput) etcInput.style.display = selected.includes("기타") ? "block" : "none";
+        }
+      });
+    });
+    const etcInput = card.querySelector(`[data-etcfor="${qid}"]`);
+    if(etcInput) etcInput.addEventListener('input', e=>{ etcAnswers[qid] = e.target.value; });
+    const textArea = card.querySelector(`[data-textfor="${qid}"]`);
+    if(textArea) textArea.addEventListener('input', e=>{ answers[qid] = e.target.value; });
+  });
+}
+
+function submitSurvey(){
+  const record = { submittedAt: new Date().toISOString(), answers, etcAnswers };
+  db.ref(DB_PATH).push(record)
+    .then(()=>{
+      document.getElementById("app").innerHTML = `
+        <div class="done">
+          <h2>제출이 완료되었습니다</h2>
+          <p>소중한 의견 감사합니다.<br>다음 모임에서 뵙겠습니다 🌱</p>
+        </div>`;
+    })
+    .catch(err=>{
+      alert("제출 중 오류가 발생했습니다. 다시 시도해주세요.\\n(" + err.message + ")");
+    });
+}
+
+/* ===================== 관리자 대시보드 ===================== */
+function renderAdminLock(){
+  document.getElementById("app").innerHTML = `
+    <div class="admin-lock">
+      <div class="section-label" style="border:none; padding:0; text-align:center;">관리자 페이지</div>
+      <input type="password" inputmode="numeric" maxlength="4" id="pinInput" placeholder="PIN 입력">
+      <button class="submit" onclick="checkPin()">확인</button>
+    </div>`;
+}
+function checkPin(){
+  const val = document.getElementById("pinInput").value;
+  if(val === ADMIN_PIN){ loadAdminData(); }
+  else { alert("PIN이 올바르지 않습니다."); }
+}
+function loadAdminData(){
+  document.getElementById("app").innerHTML = `<div class="admin-header"><h2>홈커밍데이 설문 결과</h2><button class="refresh" onclick="loadAdminData()">새로고침</button></div><div class="wrap" id="statsWrap">불러오는 중...</div>`;
+  db.ref(DB_PATH).once("value").then(snap=>{
+    const data = snap.val() || {};
+    const rows = Object.values(data);
+    renderStats(rows);
+  });
+}
+function renderStats(rows){
+  const total = rows.length;
+  let html = `<div class="stat-card"><div class="stat-title">총 응답 수</div><div style="font-size:26px;font-weight:700;color:var(--sage-dark)">${total}건</div></div>`;
+
+  Q.forEach(q=>{
+    if(q.type==="text") return;
+    const counts = {};
+    q.opts.forEach(o=>counts[o]=0);
+    rows.forEach(r=>{
+      const a = r.answers && r.answers[q.id];
+      if(!a) return;
+      if(Array.isArray(a)) a.forEach(v=>{ if(counts[v]!==undefined) counts[v]++; });
+      else if(counts[a]!==undefined) counts[a]++;
+    });
+    const max = Math.max(1, ...Object.values(counts));
+    html += `<div class="stat-card"><div class="stat-title">${q.text}</div>`;
+    Object.keys(counts).forEach(k=>{
+      const pct = (counts[k]/max*100);
+      html += `<div class="bar-row">
+        <div class="bar-label">${k}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar-count">${counts[k]}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  Q.filter(q=>q.type==="text").forEach(q=>{
+    const replies = rows.map(r=> r.answers && r.answers[q.id]).filter(Boolean);
+    html += `<div class="stat-card"><div class="stat-title">${q.text} (${replies.length}건)</div>`;
+    if(replies.length===0) html += `<div class="text-reply" style="color:#aaa">응답 없음</div>`;
+    replies.forEach(t=>{ html += `<div class="text-reply">${t}</div>`; });
+    html += `</div>`;
+  });
+
+  // 기타 응답 모음
+  const etcTexts = [];
+  rows.forEach(r=>{
+    if(r.etcAnswers){
+      Object.values(r.etcAnswers).forEach(v=>{ if(v) etcTexts.push(v); });
+    }
+  });
+  if(etcTexts.length){
+    html += `<div class="stat-card"><div class="stat-title">기타 응답 모음</div>`;
+    etcTexts.forEach(t=> html += `<div class="text-reply">${t}</div>`);
+    html += `</div>`;
+  }
+
+  document.getElementById("statsWrap").innerHTML = html;
+}
+
+/* ===================== 진입점 ===================== */
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(window.location.hash === "#admin"){ renderAdminLock(); }
+  else { renderSurvey(); }
+});
+</script>
+</body>
+</html>
